@@ -1,0 +1,88 @@
+{
+	"name": "second_process",
+	"properties": {
+		"activities": [
+			{
+				"name": "second_silver",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "schema_validation",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": {
+						"value": "/Users/m.ramakrishnareddy2004@gmail.com/Mysql-to-azure-DataMigration/sliver_secondmethod",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "schema_validation",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/m.ramakrishnareddy2004@gmail.com/Mysql-to-azure-DataMigration/SM_Schema_evolution"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "trigger",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "schema_validation",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-85.eastus.logic.azure.com:443/workflows/e31d799076cd488486eb560b411d07d4/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=-GSCMZKrrVQe_yHpmC-I-RkJN-T0iTsLxDtUKF4zsdI",
+					"body": {
+						"value": "{\n  \"pipeline\": \"@pipeline().Pipeline\",\n  \"failedActivity\": \"@activity('schema_validation').output.runOutput.name\",\n  \"table\": \"orders_full\",\n  \"error\": \"@activity('schema_validation').error.message\"\n}\n",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-07-14T19:20:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
